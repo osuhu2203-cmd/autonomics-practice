@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ANS Pharmacology</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --page-bg: #f4f4f5;
+      --text: #18181b;
+      --muted: #52525b;
+      --border: #d4d4d8;
+      --blue: #1d4ed8;
+      --blue-bg: #eff6ff;
+      --green: #15803d;
+      --green-bg: #f0fdf4;
+      --purple: #6d28d9;
+      --purple-bg: #f5f3ff;
+      --wrong: #b91c1c;
+      --wrong-bg: #fef2f2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      background: var(--page-bg);
+      color: var(--text);
+      margin: 0;
+      padding: 24px 16px;
+      font-family: "Courier New", Courier, monospace;
+      line-height: 1.5;
+      display: flex;
+      justify-content: center;
+    }
+    .doc-sheet {
+      background: var(--bg);
+      max-width: 840px;
+      width: 100%;
+      padding: 40px 48px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .doc-header {
+      border-bottom: 2px solid var(--text);
+      padding-bottom: 10px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    h1 {
+      font-size: 1.2rem;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .btn-small {
+      font-family: inherit;
+      font-size: 0.8rem;
+      padding: 6px 10px;
+      border: 1px solid var(--text);
+      background: #fff;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-small:hover { background: #f4f4f5; }
+    .btn-small.dark {
+      background: var(--text);
+      color: #fff;
+    }
+    .btn-small.dark:hover { opacity: 0.88; }
+    .btn-small.random-active {
+      background: var(--purple-bg);
+      border: 2px solid var(--purple);
+      color: var(--purple);
+    }
+
+    /* Entity Selector Bar */
+    .selector-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .entity-btn {
+      flex: 1;
+      min-width: 130px;
+      padding: 10px 12px;
+      border: 1px solid var(--text);
+      background: #fff;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: left;
+    }
+    .entity-btn:hover:not(:disabled) { background: #f4f4f5; }
+    .entity-btn:disabled {
+      border-color: #e4e4e7;
+      color: #a1a1aa;
+      background: #fafafa;
+      cursor: not-allowed;
+      text-decoration: line-through;
+    }
+    .entity-btn.stem-selected {
+      background: var(--blue-bg);
+      border: 2px solid var(--blue);
+      color: var(--blue);
+    }
+    .entity-btn.target-selected {
+      background: var(--green-bg);
+      border: 2px solid var(--green);
+      color: var(--green);
+    }
+    .badge {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: normal;
+      margin-top: 2px;
+      color: var(--muted);
+    }
+    .stem-selected .badge { color: var(--blue); font-weight: bold; }
+    .target-selected .badge { color: var(--green); font-weight: bold; }
+
+    .status-bar {
+      font-size: 0.83rem;
+      color: var(--muted);
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* Document Blocks */
+    .quiz-workspace { display: none; }
+    .toolbar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .block-label {
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .btn-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    pre.doc-box {
+      background: #fafafa;
+      border: 1px solid var(--border);
+      padding: 16px 18px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.88rem;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin: 0 0 14px 0;
+      line-height: 1.55;
+    }
+
+    /* Interactive Option Buttons */
+    .interactive-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+    .opt-click-btn {
+      padding: 10px 12px;
+      border: 1px solid var(--text);
+      background: #fff;
+      font-family: inherit;
+      font-size: 0.88rem;
+      text-align: left;
+      cursor: pointer;
+    }
+    .opt-click-btn:hover:not(:disabled) { background: #f4f4f5; }
+    .opt-click-btn.correct {
+      border: 2px solid var(--green);
+      background: var(--green-bg);
+      color: var(--green);
+      font-weight: bold;
+    }
+    .opt-click-btn.wrong {
+      border: 2px solid var(--wrong);
+      background: var(--wrong-bg);
+      color: var(--wrong);
+      text-decoration: line-through;
+    }
+
+    .answer-section {
+      display: none;
+      border-top: 2px solid var(--text);
+      padding-top: 18px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="doc-sheet">
+  <div class="doc-header">
+    <h1>ANS Pharmacology Document Builder</h1>
+    <div class="btn-group">
+      <span id="dataset-info" style="font-size:0.8rem; color:var(--muted); align-self:center;">
+        [Sample: 13 Drugs]
+      </span>
+      <button class="btn-small" id="toggle-dataset-btn" onclick="toggleDataset()">
+        Switch to Full CSV (38 Drugs)
+      </button>
+    </div>
+  </div>
+
+  <!-- 4 Entity Selector Buttons + Random + Clear -->
+  <div class="selector-bar">
+    <button class="entity-btn" id="btn-drug" onclick="selectEntity('drug')">
+      1. Drug
+      <span class="badge" id="badge-drug">[Click: Stem / Options]</span>
+    </button>
+    <button class="entity-btn" id="btn-receptor" onclick="selectEntity('receptor')">
+      2. Receptor
+      <span class="badge" id="badge-receptor">[Click: Stem / Options]</span>
+    </button>
+    <button class="entity-btn" id="btn-effect" onclick="selectEntity('effect')">
+      3. Effect
+      <span class="badge" id="badge-effect">[Click: Stem / Options]</span>
+    </button>
+    <button class="entity-btn" id="btn-outcome" onclick="selectEntity('outcome')">
+      4. Clinical Outcome
+      <span class="badge" id="badge-outcome">[Drug Only]</span>
+    </button>
+    <button class="btn-small" id="btn-random" onclick="enableRandomMode()" style="padding:0 14px;">
+      [Random Direction]
+    </button>
+    <button class="btn-small" onclick="clearSelection()" style="padding:0 14px;">
+      [Clear]
+    </button>
+  </div>
+
+  <div class="status-bar">
+    <span id="status-hint">STEP 1: Click an entity above to set the Stem (Blue), or click [Random Direction].</span>
+    <span id="score-display">SCORE: 0 / 0</span>
+  </div>
+
+  <!-- Main Workspace -->
+  <div class="quiz-workspace" id="quiz-workspace">
+    
+    <!-- Question Only Block (Copyable) -->
+    <div class="toolbar-row">
+      <span class="block-label" id="pathway-label">QUESTION BLOCK (STATIC DOC FORMAT)</span>
+      <div class="btn-group">
+        <button class="btn-small" id="copy-q-btn" onclick="copyText('question-box', 'copy-q-btn', '[Copy Question Only]')">
+          [Copy Question Only]
+        </button>
+        <button class="btn-small" onclick="revealAnswerWithoutGuess()">
+          [Reveal Answer Key]
+        </button>
+        <button class="btn-small" onclick="generateBatch(50)">
+          [Batch Export 20 Questions]
+        </button>
+        <button class="btn-small dark" onclick="generateQuestion()">
+          [Next Question ──►]
+        </button>
+      </div>
+    </div>
+
+    <pre class="doc-box" id="question-box"></pre>
+
+    <div id="interactive-label" style="font-size:0.78rem; color:var(--muted); margin-bottom:6px;">
+      CLICK AN OPTION BELOW TO TEST YOURSELF (OR USE [REVEAL ANSWER KEY] ABOVE):
+    </div>
+    <div class="interactive-options" id="options-container"></div>
+
+    <!-- Reformatted Question + Visual Explanation Block -->
+    <div class="answer-section" id="answer-section">
+      <div class="toolbar-row">
+        <span class="block-label">REFORMATTED QUESTION + EXPANDED ANSWER CONNECTIONS</span>
+        <div class="btn-group">
+          <button class="btn-small dark" id="copy-all-btn" onclick="copyText('explanation-box', 'copy-all-btn', '[Copy Question + Explanation]')">
+            [Copy Question + Explanation]
+          </button>
+          <button class="btn-small" onclick="generateQuestion()">
+            [Next Question ──►]
+          </button>
+        </div>
+      </div>
+      <pre class="doc-box" id="explanation-box"></pre>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // =========================================================================
+  // 1. RELATIONAL DATABASE
+  // =========================================================================
+  const rawDb = {
+    drug: [
+      { id: "d1", name: "Bethanechol", receptorIds: ["r1", "r3"], outcomeIds: ["c1", "c2"], note: "Choline Ester, Cannot Cross CNS", nonSelective: false, inSample: true },
+      { id: "d2", name: "Pilocarpine", receptorIds: ["r1", "r3"], outcomeIds: ["c3", "c4", "c5"], note: "Alkaloids, Can Cross CNS, not broken down by cholinesterase", nonSelective: false, inSample: true },
+      { id: "d3", name: "Cevimeline", receptorIds: ["r1", "r3"], outcomeIds: ["c3", "c4"], note: "", nonSelective: false, inSample: false },
+      { id: "d4", name: "Organophosphates", receptorIds: ["r2"], outcomeIds: [], note: "Irreversible and a neurotoxin", nonSelective: false, inSample: false },
+      { id: "d5", name: "Physo/Neo/Riva/Pyrido -stigmine", receptorIds: ["r2"], outcomeIds: ["c5", "c16", "c26"], note: "specifically physostigmine for glaucoma | Pyrido/Neo-stigmine for MG", nonSelective: false, inSample: true },
+      { id: "d6", name: "Atropine", receptorIds: ["r7"], outcomeIds: ["c17"], note: "Also for blocking muscarinic effects associated with ACHE inhibition", nonSelective: false, inSample: true },
+      { id: "d7", name: "Ipratropium", receptorIds: ["r7"], outcomeIds: ["c14"], note: "", nonSelective: false, inSample: true },
+      { id: "d8", name: "Oxybutynin", receptorIds: ["r7"], outcomeIds: ["c15"], note: "", nonSelective: false, inSample: false },
+      { id: "d9", name: "Soli/Dari -fenacin", receptorIds: ["r7"], outcomeIds: ["c15"], note: "", nonSelective: false, inSample: false },
+      { id: "d10", name: "Oxymetazoline", receptorIds: ["r4", "r8"], outcomeIds: ["c9", "c10"], note: "", nonSelective: true, inSample: false },
+      { id: "d11", name: "Epinephrine", receptorIds: ["r5", "r9", "r4", "r8"], outcomeIds: ["c8", "c25"], note: "Non-selective alpha and beta (A1 = A2, B1 = B2)", nonSelective: true, inSample: true },
+      { id: "d12", name: "Norepinephrine", receptorIds: ["r5", "r9", "r4", "r8"], outcomeIds: [], note: "Non-selective alpha and beta (A1 = A2, B1 >> B2)", nonSelective: true, inSample: false },
+      { id: "d13", name: "Phenylephrine", receptorIds: ["r4"], outcomeIds: ["c8", "c10", "c18"], note: "reflex brady", nonSelective: false, inSample: true },
+      { id: "d14", name: "Midodrine", receptorIds: ["r4"], outcomeIds: ["c7"], note: "reflex brady", nonSelective: false, inSample: false },
+      { id: "d15", name: "Brimonidine", receptorIds: ["r8"], outcomeIds: ["c5", "c9"], note: "", nonSelective: false, inSample: false },
+      { id: "d16", name: "Apraclonidine", receptorIds: ["r8"], outcomeIds: ["c5"], note: "", nonSelective: false, inSample: false },
+      { id: "d17", name: "Isoproterenol", receptorIds: ["r9", "r5"], outcomeIds: [], note: "", nonSelective: true, inSample: false },
+      { id: "d18", name: "Dobutamine", receptorIds: ["r9"], outcomeIds: ["c13"], note: "", nonSelective: false, inSample: true },
+      { id: "d19", name: "Albuterol", receptorIds: ["r5"], outcomeIds: ["c14"], note: "", nonSelective: false, inSample: true },
+      { id: "d20", name: "Mirabegron", receptorIds: ["r6"], outcomeIds: ["c15"], note: "", nonSelective: false, inSample: false },
+      { id: "d21", name: "Timolol", receptorIds: ["r16", "r11"], outcomeIds: ["c5"], note: "", nonSelective: true, inSample: false },
+      { id: "d22", name: "Mecamylamine", receptorIds: ["r12"], outcomeIds: [], note: "", nonSelective: false, inSample: false },
+      { id: "d23", name: "d-Tubocurarine", receptorIds: ["r13"], outcomeIds: ["c24"], note: "", nonSelective: false, inSample: false },
+      { id: "d24", name: "Succinylcholine", receptorIds: ["r14"], outcomeIds: ["c24"], note: "Depolarizing, non-competitive. not broken down by AChE nor can be reversed", nonSelective: false, inSample: true },
+      { id: "d25", name: "Tropicamide", receptorIds: ["r7"], outcomeIds: ["c18"], note: "", nonSelective: false, inSample: false },
+      { id: "d26", name: "Phenoxybenzamine", receptorIds: ["r10", "r17"], outcomeIds: ["c20"], note: "Non-selective, Irreversible", nonSelective: true, inSample: false },
+      { id: "d27", name: "Phentolamine", receptorIds: ["r10", "r17"], outcomeIds: ["c20"], note: "Non-Selective, Reversible", nonSelective: true, inSample: false },
+      { id: "d28", name: "Prazosin", receptorIds: ["r10"], outcomeIds: ["c11", "c19"], note: "Reversible", nonSelective: false, inSample: true },
+      { id: "d29", name: "Tamsulosin", receptorIds: ["r10"], outcomeIds: ["c19"], note: "minimal CV effects", nonSelective: false, inSample: false },
+      { id: "d30", name: "Silodosin", receptorIds: ["r10"], outcomeIds: ["c19"], note: "", nonSelective: false, inSample: false },
+      { id: "d31", name: "Propranolol", receptorIds: ["r11", "r16"], outcomeIds: ["c11", "c22", "c23"], note: "Non-Selective Beta Antagonist; high lipid solubility with CNS Penetration.", nonSelective: true, inSample: true },
+      { id: "d32", name: "Atenolol", receptorIds: ["r11"], outcomeIds: ["c11", "c22"], note: "B1 has no vasodilatory action but is a treatment for HTN dt cardiac effects", nonSelective: false, inSample: false },
+      { id: "d33", name: "Metoprolol", receptorIds: ["r11"], outcomeIds: ["c11", "c21", "c22"], note: "no vasodilatory action but is a treatment for HTN", nonSelective: false, inSample: false },
+      { id: "d34", name: "Carvedilol", receptorIds: ["r10", "r11", "r16"], outcomeIds: ["c11", "c21"], note: "Non-Selective Beta Antagonist with A1 Antagonism", nonSelective: true, inSample: false },
+      { id: "d35", name: "Labetalol", receptorIds: ["r10", "r11", "r16"], outcomeIds: ["c11"], note: "Non-Selective Beta Antagonist with A1 Antagonism", nonSelective: true, inSample: false },
+      { id: "d36", name: "Yohimbine", receptorIds: ["r17"], outcomeIds: [], note: "Supplement, no approved therapeutic uses", nonSelective: false, inSample: false },
+      { id: "d37", name: "Clonidine", receptorIds: ["r8"], outcomeIds: ["c12", "c11"], note: "", nonSelective: false, inSample: true },
+      { id: "d38", name: "Methacholine", receptorIds: ["r1", "r3"], outcomeIds: ["c6"], note: "", nonSelective: false, inSample: false }
+    ],
+    receptor: [
+      { id: "r1", name: "M3 Agonism", note: "M2 represented in heart", inSample: true },
+      { id: "r2", name: "acetylcholinesterase Inhibition", note: "increases ACh in nicotinic (nm) and muscarinic junctions", inSample: true },
+      { id: "r3", name: "M2 Agonism", note: "", inSample: true },
+      { id: "r4", name: "A1 Agonism", note: "Reflex Brady", inSample: true },
+      { id: "r5", name: "B2 Agonism", note: "Reflex Tachy", inSample: true },
+      { id: "r6", name: "B3 Agonism", note: "", inSample: true },
+      { id: "r7", name: "Muscarinic Antagonism", note: "", inSample: true },
+      { id: "r8", name: "A2 Agonism", note: "Anti-hypertensive if centrally acting", inSample: true },
+      { id: "r9", name: "B1 Agonism", note: "", inSample: true },
+      { id: "r10", name: "A1 Antagonism", note: "Reflex Tachy", inSample: true },
+      { id: "r11", name: "B1 Antagonism", note: "", inSample: true },
+      { id: "r12", name: "Nicotinic (Nn) Antagonism - Ganglionic", note: "blocks predominant tone in each organ system, so blocks sympathetic in arteries veins and sweating, parasympathetic everywhere else.", inSample: false },
+      { id: "r13", name: "Nicotinic (Nm) Antagonism - Competitive", note: "", inSample: false },
+      { id: "r14", name: "Nicotinic (Nm) Agonism", note: "", inSample: true },
+      { id: "r16", name: "B2 Antagonism", note: "", inSample: true },
+      { id: "r17", name: "A2 Antagonism", note: "", inSample: false }
+    ],
+    effect: [
+      { id: "e1", name: "Bronchoconstriction", receptorIds: ["r1", "r2", "r16"], note: "", inSample: true },
+      { id: "e2", name: "Bronchosecretion", receptorIds: ["r1", "r2"], note: "", inSample: false },
+      { id: "e3", name: "Miosis", receptorIds: ["r1", "r2", "r8"], note: "", inSample: true },
+      { id: "e4", name: "Reduces IOP", receptorIds: ["r1", "r2", "r8", "r16", "r11"], note: "", inSample: true },
+      { id: "e5", name: "Adaptation to Near Vision", receptorIds: ["r1", "r2"], note: "", inSample: false },
+      { id: "e6", name: "Contraction of Detrusor Muscle", receptorIds: ["r1", "r2"], note: "", inSample: true },
+      { id: "e7", name: "Relaxation of Internal Urethral Sphincter", receptorIds: ["r1", "r2", "r10"], note: "", inSample: false },
+      { id: "e8", name: "Relaxation of Detrusor Muscle", receptorIds: ["r5", "r6", "r7", "r12"], note: "", inSample: true },
+      { id: "e9", name: "Contraction of Internal Urethral Sphincter", receptorIds: ["r4"], note: "", inSample: false },
+      { id: "e10", name: "Stimulates Secretion and Motility of GI Tract", receptorIds: ["r1", "r2"], note: "", inSample: false },
+      { id: "e11", name: "Mydriasis", receptorIds: ["r4", "r7", "r12"], note: "", inSample: true },
+      { id: "e12", name: "Vasodilation (Including Central and Skeletal)", receptorIds: ["r1", "r2", "r5", "r8", "r10", "r12"], note: "M3/AChEI via endothelial NO; A2 via central", inSample: true },
+      { id: "e13", name: "Bradycardia (including reflex)", receptorIds: ["r2", "r3", "r4", "r8", "r11"], note: "A1 causes reflex bradycardia via baroreceptors", inSample: true },
+      { id: "e14", name: "Sweating", receptorIds: ["r1", "r2"], note: "Sympathetic postganglionic fibers release ACh onto M3", inSample: false },
+      { id: "e15", name: "Increased Tears", receptorIds: ["r1", "r2"], note: "", inSample: false },
+      { id: "e16", name: "Anhidrosis", receptorIds: ["r7", "r12"], note: "", inSample: true },
+      { id: "e17", name: "Tachycardia (including reflex)", receptorIds: ["r7", "r9", "r5", "r10", "r17", "r12"], note: "B2 and A1-antagonism cause reflex tachycardia via vasodilation", inSample: true },
+      { id: "e18", name: "Reduced GI Secretions and Motility", receptorIds: ["r7", "r8", "r5", "r12"], note: "", inSample: false },
+      { id: "e19", name: "Decreased Tears", receptorIds: ["r7", "r12"], note: "", inSample: false },
+      { id: "e20", name: "Increases IOP", receptorIds: ["r7", "r4", "r12"], note: "Mydriasis narrows angle in angle-closure glaucoma", inSample: false },
+      { id: "e21", name: "Xerostomia", receptorIds: ["r7", "r8", "r12"], note: "", inSample: false },
+      { id: "e22", name: "Loss of accommodation / cycloplegia / blurry vision", receptorIds: ["r7", "r12"], note: "", inSample: false },
+      { id: "e23", name: "Confusion / Sedation", receptorIds: ["r7", "r8"], note: "Only if CNS penetrating", inSample: false },
+      { id: "e24", name: "Vasoconstriction", receptorIds: ["r4", "r8"], note: "If A2 acts peripherally on vascular smooth muscle", inSample: true },
+      { id: "e25", name: "Nasal Decongestion", receptorIds: ["r4", "r8"], note: "", inSample: false },
+      { id: "e26", name: "Vasoconstriction of vessels in eye", receptorIds: ["r4", "r8"], note: "", inSample: false },
+      { id: "e27", name: "Relax bronchial smooth muscle", receptorIds: ["r5", "r7"], note: "", inSample: true },
+      { id: "e28", name: "Gluconeogenesis / Glycogenolysis", receptorIds: ["r5", "r4"], note: "", inSample: false },
+      { id: "e29", name: "Relaxes smooth muscle in prostate", receptorIds: ["r10"], note: "", inSample: true },
+      { id: "e30", name: "Muscle Paralysis", receptorIds: ["r13", "r14"], note: "", inSample: true }
+    ],
+    outcome: [
+      { id: "c1", name: "Post-Op Urinary Retention Treatment", note: "", inSample: true },
+      { id: "c2", name: "Post-Op Gut Immotility Treatment", note: "", inSample: true },
+      { id: "c3", name: "Xerostomia Treatment", note: "", inSample: true },
+      { id: "c4", name: "Sjogren's Syndrome Treatment", note: "", inSample: true },
+      { id: "c5", name: "Glaucoma Treatment", note: "specifically physostigmine for glaucoma | Pyrido/Neo-stigmine for MG", inSample: true },
+      { id: "c6", name: "Airway disease diagnosis", note: "", inSample: false },
+      { id: "c7", name: "Reversal of Antihypertensives / Severe orthostatic hypotension", note: "", inSample: false },
+      { id: "c8", name: "Slow Down Hemorrhages (used locally)", note: "", inSample: true },
+      { id: "c9", name: "Treats Red Eye", note: "specifically A2A receptor with oxymetazoline.", inSample: false },
+      { id: "c10", name: "Congestion Treatment", note: "", inSample: true },
+      { id: "c11", name: "Hypertension Treatment", note: "", inSample: true },
+      { id: "c12", name: "ADHD Treatment", note: "centrally acting component", inSample: true },
+      { id: "c13", name: "Acute Heart Failure / Cardiogenic shock Treatment", note: "", inSample: true },
+      { id: "c14", name: "Asthma/COPD treatment", note: "", inSample: true },
+      { id: "c15", name: "Urinary Incontinence Treatment", note: "", inSample: false },
+      { id: "c16", name: "Myasthenia gravis treatment", note: "", inSample: true },
+      { id: "c17", name: "Reversal of Organophosphate / Nerve Gas poisoning", note: "in conjugation with pralidoxime (a AChEase reactivator) for poisoning", inSample: true },
+      { id: "c18", name: "Mydriasis during eye exams", note: "", inSample: true },
+      { id: "c19", name: "Benign Prostatic Hyperplasia Treatment", note: "", inSample: true },
+      { id: "c20", name: "Pheochromocytoma Treatment", note: "", inSample: false },
+      { id: "c21", name: "Chronic Heart Failure Treatment", note: "per guidelines it's typically just metoprolol succinate and carvedilol, but bblockers in general are used to reduce oxygen demands of heart", inSample: false },
+      { id: "c22", name: "Hyperthyroidism Treatment", note: "", inSample: true },
+      { id: "c23", name: "Stage Fright Treatment", note: "dt cns penetration", inSample: true },
+      { id: "c24", name: "Anesthesia adjunct for paralysis", note: "Succinylcholine not broken down by AChE nor can be reversed used for its rapid onset and short duration as opposed to the non-depolarizing agents.", inSample: true },
+      { id: "c25", name: "anaphylaxis", note: "Remember the B2 agonism = B1 as opposed to norepi's B1 >> B2. B2 helps relax smooth muscle and open the airway", inSample: true },
+      { id: "c26", name: "Alzheimer's Treatment", note: "Specifically Riva (and tacrine, donepezil and galantamine)", inSample: true }
+    ]
+  };
+
+  const ALLOWED_DIRECTIONS = [
+    ["drug", "receptor"],
+    ["receptor", "drug"],
+    ["drug", "effect"],
+    ["effect", "drug"],
+    ["receptor", "effect"],
+    ["effect", "receptor"],
+    ["drug", "outcome"],
+    ["outcome", "drug"]
+  ];
+
+  let useSampleOnly = true;
+  let isRandomMode = false;
+  let lastDirectionKey = "";
+  let questionCounter = 0;
+  let currentQuestionState = null;
+
+  const entityNames = {
+    drug: "Drug",
+    receptor: "Receptor",
+    effect: "Effect",
+    outcome: "Clinical Outcome"
+  };
+
+  function getActiveTable(type, isDrugEffectPair = false) {
+    let list = rawDb[type];
+    if (useSampleOnly) {
+      list = list.filter(item => item.inSample);
+    }
+    if (type === "drug" && isDrugEffectPair) {
+      list = list.filter(d => !d.nonSelective);
+    }
+    return list;
+  }
+
+  function toggleDataset() {
+    useSampleOnly = !useSampleOnly;
+    document.getElementById("dataset-info").textContent = useSampleOnly
+      ? "[Sample: 13 Drugs]"
+      : "[Full CSV: 38 Drugs]";
+    document.getElementById("toggle-dataset-btn").textContent = useSampleOnly
+      ? "Switch to Full CSV (38 Drugs)"
+      : "Switch to Sample (13 Drugs)";
+    if ((stemEntity && targetEntity) || isRandomMode) {
+      generateQuestion();
+    }
+  }
+
+  // =========================================================================
+  // 2. RELATIONAL LOOKUPS & PROMPT BUILDER
+  // =========================================================================
+  function getRelatedItems(fromType, fromItem, toType) {
+    const isDrugEffect = (fromType === "drug" && toType === "effect") || (fromType === "effect" && toType === "drug");
+    const targetPool = getActiveTable(toType, isDrugEffect);
+
+    if (fromType === "drug" && toType === "receptor") {
+      return targetPool.filter(r => fromItem.receptorIds.includes(r.id));
+    }
+    if (fromType === "receptor" && toType === "drug") {
+      return targetPool.filter(d => d.receptorIds.includes(fromItem.id));
+    }
+    if (fromType === "receptor" && toType === "effect") {
+      return targetPool.filter(e => e.receptorIds.includes(fromItem.id));
+    }
+    if (fromType === "effect" && toType === "receptor") {
+      return targetPool.filter(r => fromItem.receptorIds.includes(r.id));
+    }
+    if (fromType === "drug" && toType === "effect") {
+      return targetPool.filter(e => e.receptorIds.some(rId => fromItem.receptorIds.includes(rId)));
+    }
+    if (fromType === "effect" && toType === "drug") {
+      return targetPool.filter(d => d.receptorIds.some(rId => fromItem.receptorIds.includes(rId)));
+    }
+    if (fromType === "drug" && toType === "outcome") {
+      return targetPool.filter(c => fromItem.outcomeIds.includes(c.id));
+    }
+    if (fromType === "outcome" && toType === "drug") {
+      return targetPool.filter(d => d.outcomeIds.includes(fromItem.id));
+    }
+    return [];
+  }
+
+  function buildPromptSentence(fromType, toType, stemName) {
+    if (fromType === "drug" && toType === "effect") return `Which of the following effects is caused by ${stemName}?`;
+    if (fromType === "effect" && toType === "drug") return `Which of the following drugs causes the effect: "${stemName}"?`;
+    if (fromType === "drug" && toType === "receptor") return `Which of the following receptor actions is a mechanism of ${stemName}?`;
+    if (fromType === "receptor" && toType === "drug") return `Which of the following drugs has an effect of ${stemName}?`;
+    if (fromType === "receptor" && toType === "effect") return `Which of the following effects is caused by ${stemName}?`;
+    if (fromType === "effect" && toType === "receptor") return `Which of the following receptor mechanisms mediates "${stemName}"?`;
+    if (fromType === "drug" && toType === "outcome") return `Which of the following is treated/diagnosed with ${stemName}?`;
+    if (fromType === "outcome" && toType === "drug") return `Which of the following drugs is used for "${stemName}"?`;
+    return `${stemName}:`;
+  }
+
+  // =========================================================================
+  // 3. EXPANDED RELATIONAL EXPLANATION (CORRECT ANSWER ONLY, NO DISTRACTORS)
+  // =========================================================================
+  function buildExpandedCorrectExplanation(qObj) {
+    const { stemEntity: sType, targetEntity: tType, chosenStem, correctTarget } = qObj;
+    const isDrugEffect = (sType === "drug" && tType === "effect") || (sType === "effect" && tType === "drug");
+
+    const allDrugs = getActiveTable("drug", false);
+    const allReceptors = getActiveTable("receptor", false);
+    const allEffects = getActiveTable("effect", false);
+    const allOutcomes = getActiveTable("outcome", false);
+
+    let lines = [];
+    let notes = [];
+
+    const addNote = (label, item) => {
+      if (item && item.note) {
+        const entry = `  • Note (${label} - ${item.name}):${item.note}`;
+        if (!notes.includes(entry)) notes.push(entry);
+      }
+    };
+
+    addNote(entityNames[sType], chosenStem);
+    addNote(entityNames[tType], correctTarget);
+
+    // 1. Direct Visual Pathway
+    lines.push(`DIRECT PATHWAY:`);
+    if (isDrugEffect) {
+      const drugObj = sType === "drug" ? chosenStem : correctTarget;
+      const effObj = sType === "effect" ? chosenStem : correctTarget;
+      const bridgeRecs = allReceptors.filter(r =>
+        drugObj.receptorIds.includes(r.id) && effObj.receptorIds.includes(r.id)
+      );
+      bridgeRecs.forEach(r => addNote("Receptor", r));
+      const bridgeNames = bridgeRecs.map(r => r.name).join(" / ");
+
+      lines.push(`  [${entityNames[sType]}]${chosenStem.name}`);
+      lines.push(`     │`);
+      lines.push(`     └──► [Receptor] ${bridgeNames}`);
+      lines.push(`             │`);
+      lines.push(`             └──► [${entityNames[tType]}]${correctTarget.name}`);
+    } else {
+      lines.push(`  [${entityNames[sType]}]${chosenStem.name} ──► [${entityNames[tType]}]${correctTarget.name}`);
+    }
+
+    // 2. Expanded Relational Web Around the Correct Answer & Stem
+    lines.push(``);
+    lines.push(`Connections:`);
+
+    // Case A: A Drug is part of the question (Drug <-> Receptor, Drug <-> Effect, Drug <-> Outcome)
+    if (sType === "drug" || tType === "drug") {
+      const drugObj = sType === "drug" ? chosenStem : correctTarget;
+      const drugRecs = allReceptors.filter(r => drugObj.receptorIds.includes(r.id));
+      drugRecs.forEach(r => addNote("Receptor", r));
+      const drugEffects = allEffects.filter(e => e.receptorIds.some(rId => drugObj.receptorIds.includes(rId)));
+      const drugOutcomes = allOutcomes.filter(c => drugObj.outcomeIds.includes(c.id));
+      drugOutcomes.forEach(c => addNote("Clinical Outcome", c));
+
+      lines.push(`  • ${drugObj.name} Receptor Profile:${drugRecs.map(r => r.name).join(", ") || "None"}`);
+      lines.push(`  • ${drugObj.name} Organ Effects:${drugEffects.map(e => e.name).join(", ") || "None"}`);
+      lines.push(`  • ${drugObj.name} Clinical Outcomes:${drugOutcomes.map(c => c.name).join(", ") || "None in current view"}`);
+
+      // If Receptor is the other side, show sibling drugs sharing that receptor
+      if (sType === "receptor" || tType === "receptor") {
+        const recObj = sType === "receptor" ? chosenStem : correctTarget;
+        const siblingDrugs = allDrugs.filter(d => d.receptorIds.includes(recObj.id) && d.id !== drugObj.id);
+        if (siblingDrugs.length > 0) {
+          lines.push(`  • Other Drugs with ${recObj.name}:${siblingDrugs.map(d => d.name).join(", ")}`);
+        }
+      }
+
+      // If Effect is the other side, show other mechanisms/drugs for that effect
+      if (sType === "effect" || tType === "effect") {
+        const effObj = sType === "effect" ? chosenStem : correctTarget;
+        const effRecs = allReceptors.filter(r => effObj.receptorIds.includes(r.id));
+        lines.push(`  • All Mechanisms Causing "${effObj.name}": ${effRecs.map(r => r.name).join(", ")}`);
+      }
+
+      // If Clinical Outcome is the other side, show other drugs used for that outcome
+      if (sType === "outcome" || tType === "outcome") {
+        const outObj = sType === "outcome" ? chosenStem : correctTarget;
+        const coDrugs = allDrugs.filter(d => d.outcomeIds.includes(outObj.id) && d.id !== drugObj.id);
+        if (coDrugs.length > 0) {
+          lines.push(`  • Other Drugs for "${outObj.name}": ${coDrugs.map(d => d.name).join(", ")}`);
+        }
+      }
+    }
+    // Case B: Receptor <-> Effect
+    else if ((sType === "receptor" && tType === "effect") || (sType === "effect" && tType === "receptor")) {
+      const recObj = sType === "receptor" ? chosenStem : correctTarget;
+      const effObj = sType === "effect" ? chosenStem : correctTarget;
+
+      const recDrugs = allDrugs.filter(d => d.receptorIds.includes(recObj.id));
+      const recEffects = allEffects.filter(e => e.receptorIds.includes(recObj.id));
+      const effReceptors = allReceptors.filter(r => effObj.receptorIds.includes(r.id));
+
+      lines.push(`  • Drugs Acting via ${recObj.name}:${recDrugs.map(d => d.name).join(", ") || "None"}`);
+      lines.push(`  • All Organ Effects of ${recObj.name}:${recEffects.map(e => e.name).join(", ")}`);
+      lines.push(`  • All Receptor Actions Causing "${effObj.name}": ${effReceptors.map(r => r.name).join(", ")}`);
+    }
+
+    if (notes.length > 0) {
+      lines.push(``);
+      lines.push(`NOTES:`);
+      lines.push(...notes);
+    }
+
+    return lines.join("\n");
+  }
+
+  function formatQuestionOnlyText(qObj) {
+    const letters = ["A", "B", "C", "D"];
+    let lines = [];
+    lines.push(`QUESTION #${qObj.num}  [${entityNames[qObj.stemEntity]} ──► ${entityNames[qObj.targetEntity]}]`);
+    lines.push(qObj.promptSentence);
+    lines.push(``);
+    qObj.options.forEach((opt, i) => {
+      lines.push(`  (${letters[i]})${opt.name}`);
+    });
+    return lines.join("\n");
+  }
+
+  function formatFullAnswerKeyText(qObj, selectedIdx = null) {
+    const letters = ["A", "B", "C", "D"];
+    let lines = [];
+    lines.push(`────────────────────────────────────────────────────────────────────`);
+    lines.push(`QUESTION #${qObj.num}  [${entityNames[qObj.stemEntity]} ──► ${entityNames[qObj.targetEntity]}]`);
+    lines.push(qObj.promptSentence);
+    lines.push(``);
+
+    qObj.options.forEach((opt, i) => {
+      const isCorrectOpt = opt.id === qObj.correctTarget.id;
+      const isSelectedWrong = selectedIdx !== null && i === selectedIdx && !isCorrectOpt;
+      const box = isCorrectOpt ? "[✓]" : (isSelectedWrong ? "[✗]" : "[ ]");
+      const suffix = isCorrectOpt
+        ? "   ◄── CORRECT ANSWER"
+        : (isSelectedWrong ? "   ◄── YOUR SELECTION" : "");
+      lines.push(`  ${box} (${letters[i]}) ${opt.name}${suffix}`);
+    });
+
+    lines.push(``);
+    lines.push(buildExpandedCorrectExplanation(qObj));
+    lines.push(`────────────────────────────────────────────────────────────────────`);
+    return lines.join("\n");
+  }
+
+  // =========================================================================
+  // 4. UI STATE, RANDOM DIRECTION & QUESTION GENERATOR
+  // =========================================================================
+  let stemEntity = null;
+  let targetEntity = null;
+  let score = 0;
+  let total = 0;
+
+  function isValidPair(a, b) {
+    if (!a || !b || a === b) return false;
+    if ((a === "outcome" && b !== "drug") || (b === "outcome" && a !== "drug")) return false;
+    return true;
+  }
+
+  function updateButtonHighlights(sType, tType) {
+    ["drug", "receptor", "effect", "outcome"].forEach(type => {
+      const btn = document.getElementById(`btn-${type}`);
+      btn.disabled = false;
+      btn.classList.remove("stem-selected", "target-selected");
+      document.getElementById(`badge-${type}`).textContent =
+        type === "outcome" ? "[Drug Only]" : "[Click: Stem / Options]";
+    });
+
+    if (sType) {
+      document.getElementById(`btn-${sType}`).classList.add("stem-selected");
+      document.getElementById(`badge-${sType}`).textContent = "[STEM (BLUE)]";
+    }
+    if (tType) {
+      document.getElementById(`btn-${tType}`).classList.add("target-selected");
+      document.getElementById(`badge-${tType}`).textContent = "[OPTIONS (GREEN)]";
+    }
+  }
+
+  function pickNextRandomDirection() {
+    const candidates = ALLOWED_DIRECTIONS.filter(
+      ([s, t]) => `${s}->${t}` !== lastDirectionKey
+    );
+    const chosen = shuffle(candidates)[0];
+    lastDirectionKey = `${chosen[0]}->${chosen[1]}`;
+    return chosen;
+  }
+
+  function enableRandomMode() {
+    isRandomMode = true;
+    document.getElementById("btn-random").classList.add("random-active");
+    document.getElementById("quiz-workspace").style.display = "block";
+    generateQuestion();
+  }
+
+  function selectEntity(type) {
+    if (isRandomMode) {
+      isRandomMode = false;
+      document.getElementById("btn-random").classList.remove("random-active");
+      stemEntity = null;
+      targetEntity = null;
+      updateButtonHighlights(null, null);
+    }
+
+    if (!stemEntity) {
+      stemEntity = type;
+      document.getElementById(`btn-${type}`).classList.add("stem-selected");
+      document.getElementById(`badge-${type}`).textContent = "[STEM (BLUE)]";
+
+      ["drug", "receptor", "effect", "outcome"].forEach(t => {
+        if (t !== stemEntity && !isValidPair(stemEntity, t)) {
+          document.getElementById(`btn-${t}`).disabled = true;
+          document.getElementById(`badge-${t}`).textContent = "[Unavailable]";
+        }
+      });
+
+      document.getElementById("status-hint").textContent =
+        "STEP 2: Click a second button for Options/Distractors (Green).";
+    } else if (!targetEntity && isValidPair(stemEntity, type)) {
+      targetEntity = type;
+      document.getElementById(`btn-${type}`).classList.add("target-selected");
+      document.getElementById(`badge-${type}`).textContent = "[OPTIONS (GREEN)]";
+
+      const filterNote = ((stemEntity === "drug" && targetEntity === "effect") || (stemEntity === "effect" && targetEntity === "drug"))
+        ? " [Non-selective drugs excluded]"
+        : "";
+
+      document.getElementById("status-hint").textContent =
+        `ACTIVE: ${entityNames[stemEntity]} ──► ${entityNames[targetEntity]}${filterNote}`;
+      document.getElementById("quiz-workspace").style.display = "block";
+      generateQuestion();
+    }
+  }
+
+  function clearSelection() {
+    isRandomMode = false;
+    stemEntity = null;
+    targetEntity = null;
+    lastDirectionKey = "";
+    document.getElementById("btn-random").classList.remove("random-active");
+    updateButtonHighlights(null, null);
+    document.getElementById("status-hint").textContent =
+      "STEP 1: Click an entity above to set the Stem (Blue), or click [Random Direction].";
+    document.getElementById("quiz-workspace").style.display = "none";
+  }
+
+  function shuffle(arr) {
+    return [...arr].sort(() => Math.random() - 0.5);
+  }
+
+  function buildSingleQuestionObject(num, forcedStemType = null, forcedTargetType = null) {
+    const sType = forcedStemType || stemEntity;
+    const tType = forcedTargetType || targetEntity;
+
+    const isDrugEffect = (sType === "drug" && tType === "effect") || (sType === "effect" && tType === "drug");
+    const rawStemPool = getActiveTable(sType, isDrugEffect);
+    const stemPool = rawStemPool.filter(item => getRelatedItems(sType, item, tType).length > 0);
+
+    const chosenStem = shuffle(stemPool)[0];
+    const validTargets = getRelatedItems(sType, chosenStem, tType);
+    const correctTarget = shuffle(validTargets)[0];
+    const validTargetIds = validTargets.map(t => t.id);
+
+    const targetPool = getActiveTable(tType, isDrugEffect);
+    const distractors = shuffle(
+      targetPool.filter(item => !validTargetIds.includes(item.id))
+    ).slice(0, 3);
+
+    const options = shuffle([correctTarget, ...distractors]);
+    const promptSentence = buildPromptSentence(sType, tType, chosenStem.name);
+
+    return {
+      num,
+      stemEntity: sType,
+      targetEntity: tType,
+      chosenStem,
+      correctTarget,
+      options,
+      promptSentence
+    };
+  }
+
+  function generateQuestion() {
+    if (isRandomMode) {
+      const [rStem, rTarget] = pickNextRandomDirection();
+      stemEntity = rStem;
+      targetEntity = rTarget;
+      updateButtonHighlights(stemEntity, targetEntity);
+
+      const filterNote = ((stemEntity === "drug" && targetEntity === "effect") || (stemEntity === "effect" && targetEntity === "drug"))
+        ? " [Non-selective drugs excluded]"
+        : "";
+      document.getElementById("status-hint").textContent =
+        `RANDOM MODE: ${entityNames[stemEntity]} ──► ${entityNames[targetEntity]}${filterNote} (switches direction every question)`;
+    }
+
+    questionCounter++;
+    currentQuestionState = buildSingleQuestionObject(questionCounter, stemEntity, targetEntity);
+
+    document.getElementById("answer-section").style.display = "none";
+    document.getElementById("question-box").textContent = formatQuestionOnlyText(currentQuestionState);
+    document.getElementById("interactive-label").style.display = "block";
+
+    const letters = ["A", "B", "C", "D"];
+    const container = document.getElementById("options-container");
+    container.innerHTML = "";
+    container.style.display = "grid";
+
+    currentQuestionState.options.forEach((opt, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "opt-click-btn";
+      btn.textContent = `(${letters[idx]}) ${opt.name}`;
+      btn.onclick = () => checkAnswer(btn, idx);
+      container.appendChild(btn);
+    });
+  }
+
+  function checkAnswer(clickedBtn, clickedIdx) {
+    const isCorrect = currentQuestionState.options[clickedIdx].id === currentQuestionState.correctTarget.id;
+    total++;
+    if (isCorrect) score++;
+    document.getElementById("score-display").textContent = `SCORE: ${score} / ${total}`;
+
+    const allBtns = document.querySelectorAll(".opt-click-btn");
+    allBtns.forEach((btn, idx) => {
+      btn.disabled = true;
+      if (currentQuestionState.options[idx].id === currentQuestionState.correctTarget.id) {
+        btn.classList.add("correct");
+      }
+    });
+    if (!isCorrect && clickedBtn) {
+      clickedBtn.classList.add("wrong");
+    }
+
+    document.getElementById("explanation-box").textContent = formatFullAnswerKeyText(currentQuestionState, clickedIdx);
+    document.getElementById("answer-section").style.display = "block";
+  }
+
+  function revealAnswerWithoutGuess() {
+    if (!currentQuestionState) return;
+    const allBtns = document.querySelectorAll(".opt-click-btn");
+    allBtns.forEach((btn, idx) => {
+      btn.disabled = true;
+      if (currentQuestionState.options[idx].id === currentQuestionState.correctTarget.id) {
+        btn.classList.add("correct");
+      }
+    });
+    document.getElementById("explanation-box").textContent = formatFullAnswerKeyText(currentQuestionState, null);
+    document.getElementById("answer-section").style.display = "block";
+  }
+
+  function generateBatch(count) {
+    let qBlocks = [];
+    let aBlocks = [];
+    for (let i = 0; i < count; i++) {
+      questionCounter++;
+      let sType = stemEntity;
+      let tType = targetEntity;
+      if (isRandomMode) {
+        const [rStem, rTarget] = pickNextRandomDirection();
+        sType = rStem;
+        tType = rTarget;
+      }
+      const qObj = buildSingleQuestionObject(questionCounter, sType, tType);
+      qBlocks.push(formatQuestionOnlyText(qObj));
+      aBlocks.push(formatFullAnswerKeyText(qObj, null));
+    }
+    document.getElementById("interactive-label").style.display = "none";
+    document.getElementById("options-container").style.display = "none";
+    const modeHeader = isRandomMode ? "MIXED RANDOM DIRECTIONS" : `${entityNames[stemEntity]} ──► ${entityNames[targetEntity]}`;
+    document.getElementById("question-box").textContent =
+      `=== WORKSHEET: ${ count } QUESTIONS (${ modeHeader }) ===\n\n` + qBlocks.join("\n\n");
+    document.getElementById("explanation-box").textContent =
+      `=== ANSWER KEY & EXPANDED CONNECTIONS (${ count } QUESTIONS) ===\n\n` + aBlocks.join("\n\n");
+    document.getElementById("answer-section").style.display = "block";
+  }
+
+  function copyText(elementId, btnId, defaultLabel) {
+    const text = document.getElementById(elementId).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById(btnId);
+      btn.textContent = "[Copied!]";
+      setTimeout(() => { btn.textContent = defaultLabel; }, 1600);
+    });
+  }
+</script>
+</body>
+</html>
